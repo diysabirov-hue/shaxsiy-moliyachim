@@ -372,10 +372,12 @@ function renderDebtRows(){
       }</div>
     `;
     el.querySelectorAll('[data-f]').forEach(inp => {
+      const isNumeric = inp.tagName !== 'SELECT' && inp.type === 'number';
       inp.addEventListener('input', () => {
-        row[inp.dataset.f] = (inp.tagName==='SELECT') ? inp.value : (parseFloat(inp.value)||0);
-        renderDebtRows(); renderSummaries(); render(); scheduleSave();
+        row[inp.dataset.f] = isNumeric ? (parseFloat(inp.value)||0) : inp.value;
+        renderSummaries(); render(); scheduleSave();
       });
+      inp.addEventListener('blur', () => { renderDebtRows(); });
     });
     el.querySelector('[data-remove]').addEventListener('click', () => {
       debtItems = debtItems.filter(r => r.id !== row.id);
