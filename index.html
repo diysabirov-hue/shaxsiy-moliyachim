@@ -6,6 +6,7 @@
 <title>Operatsiya: Yil Oxiri</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
     --bg:#0a0c0f; --panel:#14171c; --panel-2:#181c22;
@@ -92,10 +93,13 @@
   .subtotal-line{font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:8px; padding-top:9px; border-top:1px dashed var(--border-soft);}
   .subtotal-line div{display:flex; justify-content:space-between; margin-bottom:3px;}
   .mini-label{font-size:9px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.04em; width:100%; margin-bottom:-4px;}
+  .tg-banner{display:none; background:var(--amber-dim); color:var(--amber); font-family:var(--mono); font-size:11px; padding:9px 14px; border-radius:8px; margin-bottom:16px; text-align:center;}
 </style>
 </head>
 <body>
 <div class="wrap">
+
+  <div class="tg-banner" id="tgBanner">Bu Telegram tashqarisida ochilgan — sinov rejimi. Botdagi Menu tugmasi orqali ochsang, ma'lumot Telegram akkauntingga doimiy saqlanadi.</div>
 
   <div class="header">
     <div>
@@ -201,6 +205,7 @@
 
   <div class="footnote" id="today">--</div>
   <div class="savebar" id="saveStatus">&nbsp;</div>
+  <div class="savebar" id="storageMode">&nbsp;</div>
 
 </div>
 
@@ -223,28 +228,67 @@ let debtItems = [];
 let idCounter = 1;
 const newId = () => idCounter++;
 
+const STORAGE_KEY = 'yil_oxiri_panel';
+
+function isTelegramEnv(){
+  return !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage);
+}
+
+function storageGetRaw(key){
+  return new Promise((resolve) => {
+    if(isTelegramEnv()){
+      window.Telegram.WebApp.CloudStorage.getItem(key, (err, value) => {
+        resolve(err ? null : (value || null));
+      });
+    } else {
+      try{ resolve(localStorage.getItem(key)); }catch(e){ resolve(null); }
+    }
+  });
+}
+
+function storageSetRaw(key, value){
+  return new Promise((resolve) => {
+    if(isTelegramEnv()){
+      window.Telegram.WebApp.CloudStorage.setItem(key, value, (err, ok) => resolve(!err && ok));
+    } else {
+      try{ localStorage.setItem(key, value); resolve(true); }catch(e){ resolve(false); }
+    }
+  });
+}
+
+function collectData(){
+  const data = {};
+  fields.forEach(f => data[f] = parseFloat($(f).value) || 0);
+  data.incomeSources = incomeSources;
+  data.debtItems = debtItems;
+  return data;
+}
+
+async function forceSave(){
+  return await storageSetRaw(STORAGE_KEY, JSON.stringify(collectData()));
+}
+
 let saveTimeout = null;
 function scheduleSave(){
   $('saveStatus').textContent = 'saqlanmoqda...';
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
-    const data = {};
-    fields.forEach(f => data[f] = parseFloat($(f).value) || 0);
-    data.incomeSources = incomeSources;
-    data.debtItems = debtItems;
-    try{
-      await window.storage.set('yil-oxiri-panel', JSON.stringify(data), false);
-      $('saveStatus').textContent = 'saqlandi ✓';
-      setTimeout(()=>{$('saveStatus').textContent='\u00A0';}, 1500);
-    }catch(e){ $('saveStatus').textContent = 'saqlash xato'; }
-  }, 500);
+    const ok = await forceSave();
+    $('saveStatus').textContent = ok ? 'saqlandi ✓' : 'saqlash xato';
+    if(ok) setTimeout(()=>{$('saveStatus').textContent='\u00A0';}, 1200);
+  }, 120);
 }
+
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){ clearTimeout(saveTimeout); forceSave(); }
+});
+window.addEventListener('pagehide', () => { clearTimeout(saveTimeout); forceSave(); });
 
 async function loadData(){
   let data = null;
   try{
-    const res = await window.storage.get('yil-oxiri-panel', false);
-    if(res && res.value) data = JSON.parse(res.value);
+    const raw = await storageGetRaw(STORAGE_KEY);
+    if(raw) data = JSON.parse(raw);
   }catch(e){ /* birinchi marta ochilyapti */ }
 
   fields.forEach(f => { $(f).value = (data && data[f] !== undefined) ? data[f] : defaults[f]; });
@@ -450,6 +494,17 @@ function render(){
 }
 
 async function init(){
+  if(isTelegramEnv()){
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    try{ tg.setHeaderColor('#0a0c0f'); }catch(e){}
+    try{ tg.setBackgroundColor('#0a0c0f'); }catch(e){}
+    try{ tg.disableVerticalSwipes(); }catch(e){}
+  } else {
+    $('tgBanner').style.display = 'block';
+  }
+  $('storageMode').textContent = isTelegramEnv() ? '☁️ saqlash: Telegram Cloud' : '💾 saqlash: vaqtinchalik (lokal)';
   await loadData();
   renderIncomeRows();
   renderDebtRows();
