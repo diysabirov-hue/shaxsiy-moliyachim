@@ -293,11 +293,26 @@ async function loadData(){
 
   fields.forEach(f => { $(f).value = (data && data[f] !== undefined) ? data[f] : defaults[f]; });
 
-  if(data && data.incomeSources){ incomeSources = data.incomeSources; }
-  else { incomeSources = [{id:newId(), name:"8020 - asosiy loyiha", amount:11000000, date:nowMonthStr(), status:'olindi'}]; }
+  const rawIncome = (data && Array.isArray(data.incomeSources)) ? data.incomeSources
+    : [{id:0, name:"8020 - asosiy loyiha", amount:11000000, date:nowMonthStr(), status:'olindi'}];
+  const rawDebt = (data && Array.isArray(data.debtItems)) ? data.debtItems
+    : [{id:0, name:"Umumiy qarz (batafsil kiritilmagan)", type:'shaxsiy', balance:35000000, rate:0, payment:0}];
 
-  if(data && data.debtItems){ debtItems = data.debtItems; }
-  else { debtItems = [{id:newId(), name:"Umumiy qarz (batafsil kiritilmagan)", type:'shaxsiy', balance:35000000, rate:0, payment:0}]; }
+  incomeSources = rawIncome.map(r => ({
+    id: (typeof r.id === 'number') ? r.id : newId(),
+    name: (typeof r.name === 'string') ? r.name : String(r.name != null ? r.name : ''),
+    amount: Number(r.amount) || 0,
+    date: (typeof r.date === 'string' && r.date) ? r.date : nowMonthStr(),
+    status: r.status === 'olindi' ? 'olindi' : 'kutilmoqda'
+  }));
+  debtItems = rawDebt.map(d => ({
+    id: (typeof d.id === 'number') ? d.id : newId(),
+    name: (typeof d.name === 'string') ? d.name : String(d.name != null ? d.name : ''),
+    type: ['kredit','rasrochka','shaxsiy'].includes(d.type) ? d.type : 'shaxsiy',
+    balance: Number(d.balance) || 0,
+    rate: Number(d.rate) || 0,
+    payment: Number(d.payment) || 0
+  }));
 
   idCounter = Math.max(1, ...incomeSources.map(r=>r.id||0), ...debtItems.map(r=>r.id||0)) + 1;
 }
@@ -313,7 +328,7 @@ function renderIncomeRows(){
     const el = document.createElement('div');
     el.className = 'entry-row';
     el.innerHTML = `
-      <input class="name-input" data-f="name" placeholder="loyiha nomi" value="${row.name.replace(/"/g,'&quot;')}">
+      <input class="name-input" data-f="name" placeholder="loyiha nomi" value="${String(row.name||'').replace(/"/g,'&quot;')}">
       <input class="amount-input" type="number" data-f="amount" placeholder="summa" value="${row.amount}">
       <input class="date-input" type="month" data-f="date" value="${row.date}">
       <select data-f="status">
@@ -349,7 +364,7 @@ function renderDebtRows(){
     const el = document.createElement('div');
     el.className = 'entry-row';
     el.innerHTML = `
-      <input class="name-input" data-f="name" placeholder="qarz nomi" value="${row.name.replace(/"/g,'&quot;')}">
+      <input class="name-input" data-f="name" placeholder="qarz nomi" value="${String(row.name||'').replace(/"/g,'&quot;')}">
       <select data-f="type">
         <option value="kredit" ${row.type==='kredit'?'selected':''}>kredit</option>
         <option value="rasrochka" ${row.type==='rasrochka'?'selected':''}>rasrochka</option>
@@ -507,11 +522,22 @@ async function init(){
     $('tgBanner').style.display = 'block';
   }
   $('storageMode').textContent = isTelegramEnv() ? '☁️ saqlash: Telegram Cloud' : '💾 saqlash: vaqtinchalik (lokal)';
-  await loadData();
-  renderIncomeRows();
-  renderDebtRows();
-  renderSummaries();
-  render();
+  try{
+    await loadData();
+    renderIncomeRows();
+    renderDebtRows();
+    renderSummaries();
+    render();
+  }catch(err){
+    const banner = document.createElement('div');
+    banner.className = 'tg-banner';
+    banner.style.display = 'block';
+    banner.style.background = 'var(--red-dim)';
+    banner.style.color = '#f7d3cd';
+    banner.textContent = 'Xatolik yuz berdi: ' + (err && err.message ? err.message : err) + " — skrinshot qilib yuboring.";
+    document.querySelector('.wrap').prepend(banner);
+    console.error(err);
+  }
 
   fields.forEach(f => $(f).addEventListener('input', () => { render(); scheduleSave(); }));
 
