@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operatsiya: Yil Oxiri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c0f; --panel:#14171c; --panel-2:#181c22;
+    --border:#242830; --border-soft:#1c2027;
+    --text:#eae7df; --text-dim:#8b9098; --text-faint:#565b64;
+    --amber:#f2a93b; --amber-dim:#7a5a20;
+    --green:#4cc98a; --green-dim:#265c41;
+    --red:#e8604e; --red-dim:#6b2a22;
+    --mono: 'IBM Plex Mono', monospace; --sans: 'Inter', sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:960px; margin:0 auto; padding:28px 20px 60px;}
+  .header{display:flex; justify-content:space-between; align-items:flex-end; border-bottom:1px solid var(--border); padding-bottom:18px; margin-bottom:22px; flex-wrap:wrap; gap:14px;}
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--amber); text-transform:uppercase; margin-bottom:6px;}
+  .title{font-size:22px; font-weight:800; letter-spacing:-.01em;}
+  .clock{text-align:right;}
+  .clock-num{font-family:var(--mono); font-size:38px; font-weight:700; color:var(--amber); line-height:1;}
+  .clock-label{font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:4px; letter-spacing:.05em;}
+  .yearbar{height:3px; background:var(--border-soft); border-radius:2px; margin-top:16px; overflow:hidden;}
+  .yearbar-fill{height:100%; background:linear-gradient(90deg,var(--amber),#c97e1f);}
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px; align-items:start;}
+  @media(max-width:820px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 16px 18px;}
+  .card-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;}
+  .card-name{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);}
+  .badge{font-family:var(--mono); font-size:10px; padding:3px 7px; border-radius:20px; font-weight:600; letter-spacing:.03em; white-space:nowrap;}
+  .badge.ok{background:var(--green-dim); color:var(--green);}
+  .badge.warn{background:var(--amber-dim); color:var(--amber);}
+  .badge.bad{background:var(--red-dim); color:var(--red);}
+  .card-main{font-family:var(--mono); font-weight:700; font-size:24px; margin:10px 0 2px; word-break:break-word;}
+  .card-sub{font-size:12px; color:var(--text-dim); margin-bottom:10px;}
+  .bar{height:6px; background:var(--border-soft); border-radius:4px; overflow:hidden; margin-bottom:12px;}
+  .bar-fill{height:100%; border-radius:4px; transition:width .4s ease;}
+  .bar-fill.ok{background:var(--green);} .bar-fill.warn{background:var(--amber);} .bar-fill.bad{background:var(--red);}
+  .row{display:flex; gap:8px; margin-bottom:8px;}
+  .field{flex:1;}
+  .field label{display:block; font-size:10px; color:var(--text-faint); margin-bottom:3px; letter-spacing:.03em; text-transform:uppercase;}
+  .field input{width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:13px; padding:7px 8px; border-radius:6px;}
+  .field input:focus{outline:none; border-color:var(--amber);}
+  .pace{font-family:var(--mono); font-size:11px; color:var(--text-dim); padding-top:6px; border-top:1px solid var(--border-soft);}
+  .pace b{color:var(--text);}
+  .section-title{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); margin:26px 0 10px;}
+  .exp-panel{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px;}
+  .exp-row{display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border-soft); gap:10px; flex-wrap:wrap;}
+  .exp-row:last-child{border-bottom:none;}
+  .exp-name{font-size:13px; color:var(--text-dim);}
+  .exp-input-group{display:flex; align-items:center; gap:6px;}
+  .exp-input-group input{width:110px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:13px; padding:6px 8px; border-radius:6px; text-align:right;}
+  .exp-input-group input:focus{outline:none; border-color:var(--amber);}
+  .exp-unit{font-family:var(--mono); font-size:11px; color:var(--text-faint);}
+  .exp-total{display:flex; justify-content:space-between; padding-top:12px; margin-top:4px; border-top:1px solid var(--border); font-family:var(--mono);}
+  .exp-total-label{font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em; align-self:center;}
+  .exp-total-num{font-size:20px; font-weight:700;}
+  .verdict{margin-top:16px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:18px;}
+  .verdict-line{display:flex; justify-content:space-between; padding:7px 0; font-size:13px; border-bottom:1px solid var(--border-soft); gap:10px;}
+  .verdict-line:last-of-type{border-bottom:none;}
+  .verdict-line .label{color:var(--text-dim);}
+  .verdict-line .val{font-family:var(--mono); font-weight:600; white-space:nowrap;}
+  .verdict-final{margin-top:12px; padding:12px 14px; border-radius:8px; font-size:13px; line-height:1.5;}
+  .verdict-final.ok{background:var(--green-dim); color:#c9f2dd;}
+  .verdict-final.bad{background:var(--red-dim); color:#f7d3cd;}
+  .footnote{font-size:11px; color:var(--text-faint); margin-top:18px; text-align:center; font-family:var(--mono);}
+  .savebar{font-size:10px; color:var(--text-faint); text-align:right; font-family:var(--mono); margin-top:6px; min-height:14px;}
+
+  .subsection{margin-top:14px; padding-top:12px; border-top:1px solid var(--border-soft);}
+  .subsection-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:9px;}
+  .subsection-head span{font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint);}
+  .mini-btn{background:var(--panel-2); border:1px solid var(--border); color:var(--amber); font-family:var(--mono); font-size:10px; padding:4px 9px; border-radius:5px; cursor:pointer;}
+  .mini-btn:hover{border-color:var(--amber);}
+  .entry-row{display:flex; gap:6px; align-items:center; margin-bottom:7px; flex-wrap:wrap; background:var(--panel-2); padding:8px; border-radius:7px; border:1px solid var(--border-soft);}
+  .entry-row input, .entry-row select{background:var(--bg); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:11px; padding:5px 6px; border-radius:5px;}
+  .entry-row input:focus, .entry-row select:focus{outline:none; border-color:var(--amber);}
+  .entry-row .name-input{flex:1 1 100px; min-width:90px;}
+  .entry-row .amount-input{width:100px;}
+  .entry-row .rate-input{width:52px;}
+  .entry-row .pay-input{width:90px;}
+  .entry-row .date-input{width:120px;}
+  .entry-row select{width:100px;}
+  .remove-btn{background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:15px; padding:2px 5px; line-height:1;}
+  .remove-btn:hover{color:var(--red);}
+  .priority-tag{font-family:var(--mono); font-size:9px; background:var(--amber-dim); color:var(--amber); padding:2px 6px; border-radius:4px; margin-left:auto; white-space:nowrap;}
+  .row-note{font-family:var(--mono); font-size:10px; color:var(--text-faint); width:100%; padding-left:2px;}
+  .subtotal-line{font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:8px; padding-top:9px; border-top:1px dashed var(--border-soft);}
+  .subtotal-line div{display:flex; justify-content:space-between; margin-bottom:3px;}
+  .mini-label{font-size:9px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.04em; width:100%; margin-bottom:-4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div>
+      <div class="eyebrow">Operatsiya &middot; 31-dekabrgacha</div>
+      <div class="title">Yil oxiri paneli</div>
+    </div>
+    <div class="clock">
+      <div class="clock-num" id="daysLeft">--</div>
+      <div class="clock-label" id="clockLabel">KUN QOLDI</div>
+    </div>
+  </div>
+  <div class="yearbar"><div class="yearbar-fill" id="yearbarFill" style="width:0%"></div></div>
+
+  <div class="grid" style="margin-top:22px;">
+
+    <!-- DAROMAD -->
+    <div class="card">
+      <div class="card-top">
+        <div class="card-name">Daromad</div>
+        <div class="badge" id="incomeBadge">--</div>
+      </div>
+      <div class="card-main" id="incomeMain">--</div>
+      <div class="card-sub" id="incomeSub">joriy oylik</div>
+      <div class="bar"><div class="bar-fill" id="incomeBar" style="width:0%"></div></div>
+      <div class="row">
+        <div class="field"><label>Joriy (so'm)</label><input type="number" id="income_current" step="100000"></div>
+        <div class="field"><label>Maqsad (so'm)</label><input type="number" id="income_target" step="1000000"></div>
+      </div>
+      <div class="pace" id="incomePace">--</div>
+
+      <div class="subsection">
+        <div class="subsection-head"><span>Loyihalar / manbalar</span><button class="mini-btn" id="addIncomeRow">+ qo'sh</button></div>
+        <div id="incomeRows"></div>
+        <div class="subtotal-line" id="incomeRowsSummary"></div>
+      </div>
+    </div>
+
+    <!-- QARZ -->
+    <div class="card">
+      <div class="card-top">
+        <div class="card-name">Qarz</div>
+        <div class="badge" id="debtBadge">--</div>
+      </div>
+      <div class="card-main" id="debtMain">--</div>
+      <div class="card-sub" id="debtSub">qolgan qarz</div>
+      <div class="bar"><div class="bar-fill" id="debtBar" style="width:0%"></div></div>
+      <div class="pace" id="debtPace">--</div>
+
+      <div class="subsection">
+        <div class="subsection-head"><span>Qarzlar ro'yxati</span><button class="mini-btn" id="addDebtRow">+ qo'sh</button></div>
+        <div id="debtRows"></div>
+        <div class="subtotal-line" id="debtRowsSummary"></div>
+      </div>
+    </div>
+
+    <!-- BLOG -->
+    <div class="card">
+      <div class="card-top">
+        <div class="card-name">Blog</div>
+        <div class="badge" id="blogBadge">--</div>
+      </div>
+      <div class="card-main" id="blogMain">--</div>
+      <div class="card-sub" id="blogSub">obunachi</div>
+      <div class="bar"><div class="bar-fill" id="blogBar" style="width:0%"></div></div>
+      <div class="row">
+        <div class="field"><label>Joriy</label><input type="number" id="blog_current" step="10"></div>
+        <div class="field"><label>Maqsad</label><input type="number" id="blog_target" step="500"></div>
+      </div>
+      <div class="pace" id="blogPace">--</div>
+    </div>
+
+  </div>
+
+  <div class="section-title">Oylik majburiy xarajatlar</div>
+  <div class="exp-panel">
+    <div class="exp-row">
+      <div class="exp-name">Bog'cha (2 nafar o'g'il)</div>
+      <div class="exp-input-group"><input type="number" id="exp_kindergarten" step="100000"><span class="exp-unit">so'm</span></div>
+    </div>
+    <div class="exp-row">
+      <div class="exp-name">Kvartira / ijara</div>
+      <div class="exp-input-group"><input type="number" id="exp_rent" step="100000"><span class="exp-unit">so'm</span></div>
+    </div>
+    <div class="exp-row">
+      <div class="exp-name">Boshqa doimiy harajatlar</div>
+      <div class="exp-input-group"><input type="number" id="exp_other_usd" step="10"><span class="exp-unit">USD</span></div>
+    </div>
+    <div class="exp-row">
+      <div class="exp-name" style="color:var(--text-faint);">Kurs (1 USD)</div>
+      <div class="exp-input-group"><input type="number" id="usd_rate" step="10"><span class="exp-unit">so'm</span></div>
+    </div>
+    <div class="exp-total"><div class="exp-total-label">Jami majburiy / oy</div><div class="exp-total-num" id="expTotal">--</div></div>
+  </div>
+
+  <div class="verdict">
+    <div class="verdict-line"><div class="label">Qarzni yil oxirigacha yopish uchun oyiga kerak</div><div class="val" id="v_debtMonthly">--</div></div>
+    <div class="verdict-line"><div class="label">Hozir qarzlarga jami to'layotgan summang / oy</div><div class="val" id="v_debtPayingNow">--</div></div>
+    <div class="verdict-line"><div class="label">Majburiy xarajat + kerakli qarz to'lovi = minimal oylik</div><div class="val" id="v_minIncome">--</div></div>
+    <div class="verdict-line"><div class="label">Joriy daromadda ortiqcha / yetishmovchilik</div><div class="val" id="v_gapCurrent">--</div></div>
+    <div class="verdict-line"><div class="label">30 mlnga chiqqanda ortiqcha / yetishmovchilik</div><div class="val" id="v_gapTarget">--</div></div>
+    <div class="verdict-final" id="v_final">--</div>
+  </div>
+
+  <div class="footnote" id="today">--</div>
+  <div class="savebar" id="saveStatus">&nbsp;</div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/,/g,' ');
+const DEADLINE = new Date('2026-12-31T23:59:59');
+const YEAR_START = new Date('2026-01-01T00:00:00');
+const nowMonthStr = () => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
+
+const fields = ['income_current','income_target','blog_current','blog_target','exp_kindergarten','exp_rent','exp_other_usd','usd_rate'];
+const defaults = {
+  income_current: 11000000, income_target: 30000000,
+  blog_current: 0, blog_target: 10000,
+  exp_kindergarten: 3200000, exp_rent: 4200000, exp_other_usd: 300, usd_rate: 11900
+};
+
+let incomeSources = [];
+let debtItems = [];
+let idCounter = 1;
+const newId = () => idCounter++;
+
+let saveTimeout = null;
+function scheduleSave(){
+  $('saveStatus').textContent = 'saqlanmoqda...';
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    const data = {};
+    fields.forEach(f => data[f] = parseFloat($(f).value) || 0);
+    data.incomeSources = incomeSources;
+    data.debtItems = debtItems;
+    try{
+      await window.storage.set('yil-oxiri-panel', JSON.stringify(data), false);
+      $('saveStatus').textContent = 'saqlandi ✓';
+      setTimeout(()=>{$('saveStatus').textContent='\u00A0';}, 1500);
+    }catch(e){ $('saveStatus').textContent = 'saqlash xato'; }
+  }, 500);
+}
+
+async function loadData(){
+  let data = null;
+  try{
+    const res = await window.storage.get('yil-oxiri-panel', false);
+    if(res && res.value) data = JSON.parse(res.value);
+  }catch(e){ /* birinchi marta ochilyapti */ }
+
+  fields.forEach(f => { $(f).value = (data && data[f] !== undefined) ? data[f] : defaults[f]; });
+
+  if(data && data.incomeSources){ incomeSources = data.incomeSources; }
+  else { incomeSources = [{id:newId(), name:"8020 - asosiy loyiha", amount:11000000, date:nowMonthStr(), status:'olindi'}]; }
+
+  if(data && data.debtItems){ debtItems = data.debtItems; }
+  else { debtItems = [{id:newId(), name:"Umumiy qarz (batafsil kiritilmagan)", type:'shaxsiy', balance:35000000, rate:0, payment:0}]; }
+
+  idCounter = Math.max(1, ...incomeSources.map(r=>r.id||0), ...debtItems.map(r=>r.id||0)) + 1;
+}
+
+function pct(cur, target){ if(target<=0) return 0; return Math.max(0, Math.min(100,(cur/target)*100)); }
+function badgeClass(p){ if(p>=90) return 'ok'; if(p>=50) return 'warn'; return 'bad'; }
+
+// ---------- INCOME ROWS ----------
+function renderIncomeRows(){
+  const wrap = $('incomeRows');
+  wrap.innerHTML = '';
+  incomeSources.forEach(row => {
+    const el = document.createElement('div');
+    el.className = 'entry-row';
+    el.innerHTML = `
+      <input class="name-input" data-f="name" placeholder="loyiha nomi" value="${row.name.replace(/"/g,'&quot;')}">
+      <input class="amount-input" type="number" data-f="amount" placeholder="summa" value="${row.amount}">
+      <input class="date-input" type="month" data-f="date" value="${row.date}">
+      <select data-f="status">
+        <option value="kutilmoqda" ${row.status==='kutilmoqda'?'selected':''}>kutilmoqda</option>
+        <option value="olindi" ${row.status==='olindi'?'selected':''}>olindi</option>
+      </select>
+      <button class="remove-btn" data-remove="${row.id}">×</button>
+    `;
+    el.querySelectorAll('[data-f]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        row[inp.dataset.f] = inp.type==='number' ? (parseFloat(inp.value)||0) : inp.value;
+        renderSummaries(); scheduleSave();
+      });
+    });
+    el.querySelector('[data-remove]').addEventListener('click', () => {
+      incomeSources = incomeSources.filter(r => r.id !== row.id);
+      renderIncomeRows(); renderSummaries(); scheduleSave();
+    });
+    wrap.appendChild(el);
+  });
+}
+
+// ---------- DEBT ROWS ----------
+function renderDebtRows(){
+  const wrap = $('debtRows');
+  wrap.innerHTML = '';
+  const maxRate = Math.max(0, ...debtItems.map(d=>d.rate||0));
+  debtItems.forEach(row => {
+    const monthsToPay = row.payment > 0 ? (row.balance / row.payment) : null;
+    const estInterest = row.rate > 0 ? (row.balance/2) * (row.rate/100) * ((monthsToPay || 12)/12) : 0;
+    const isPriority = row.rate === maxRate && maxRate > 0 && debtItems.length > 1;
+
+    const el = document.createElement('div');
+    el.className = 'entry-row';
+    el.innerHTML = `
+      <input class="name-input" data-f="name" placeholder="qarz nomi" value="${row.name.replace(/"/g,'&quot;')}">
+      <select data-f="type">
+        <option value="kredit" ${row.type==='kredit'?'selected':''}>kredit</option>
+        <option value="rasrochka" ${row.type==='rasrochka'?'selected':''}>rasrochka</option>
+        <option value="shaxsiy" ${row.type==='shaxsiy'?'selected':''}>odamdan qarz</option>
+      </select>
+      ${isPriority ? '<span class="priority-tag">USTUVOR — eng qimmat</span>' : ''}
+      <div class="mini-label">Qoldiq (so'm)</div>
+      <input class="amount-input" type="number" data-f="balance" value="${row.balance}">
+      <div class="mini-label">Yillik foiz %</div>
+      <input class="rate-input" type="number" data-f="rate" value="${row.rate}">
+      <div class="mini-label">Oylik to'lov</div>
+      <input class="pay-input" type="number" data-f="payment" value="${row.payment}">
+      <button class="remove-btn" data-remove="${row.id}">×</button>
+      <div class="row-note">${
+        row.rate > 0
+          ? (monthsToPay ? `≈ ${Math.ceil(monthsToPay)} oyda yopiladi &middot; taxminiy foiz xarajati: ${fmt(estInterest)} so'm`
+                         : `oylik to'lov kiritilmagan — muddat hisoblanmaydi`)
+          : (monthsToPay ? `≈ ${Math.ceil(monthsToPay)} oyda yopiladi &middot; foizsiz`
+                         : `oylik to'lov kiritilmagan`)
+      }</div>
+    `;
+    el.querySelectorAll('[data-f]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        row[inp.dataset.f] = (inp.tagName==='SELECT') ? inp.value : (parseFloat(inp.value)||0);
+        renderDebtRows(); renderSummaries(); render(); scheduleSave();
+      });
+    });
+    el.querySelector('[data-remove]').addEventListener('click', () => {
+      debtItems = debtItems.filter(r => r.id !== row.id);
+      renderDebtRows(); renderSummaries(); render(); scheduleSave();
+    });
+    wrap.appendChild(el);
+  });
+}
+
+function renderSummaries(){
+  const thisMonth = nowMonthStr();
+  const receivedThisMonth = incomeSources.filter(r=>r.date===thisMonth && r.status==='olindi').reduce((s,r)=>s+r.amount,0);
+  const expectedThisMonth = incomeSources.filter(r=>r.date===thisMonth && r.status==='kutilmoqda').reduce((s,r)=>s+r.amount,0);
+  $('incomeRowsSummary').innerHTML = `<div><span>Bu oy olindi</span><span>${fmt(receivedThisMonth)} so'm</span></div><div><span>Bu oy kutilmoqda</span><span>${fmt(expectedThisMonth)} so'm</span></div>`;
+
+  const totalBalance = debtItems.reduce((s,d)=>s+(d.balance||0),0);
+  const totalPayment = debtItems.reduce((s,d)=>s+(d.payment||0),0);
+  const totalEstInterest = debtItems.reduce((s,d)=>{
+    if(!d.rate) return s;
+    const m = d.payment>0 ? d.balance/d.payment : 12;
+    return s + (d.balance/2)*(d.rate/100)*(m/12);
+  },0);
+  $('debtRowsSummary').innerHTML = `<div><span>Jami qoldiq</span><span>${fmt(totalBalance)} so'm</span></div><div><span>Hozir oyiga to'layotganing</span><span>${fmt(totalPayment)} so'm</span></div><div><span>Taxminiy jami foiz xarajati</span><span>${fmt(totalEstInterest)} so'm</span></div>`;
+}
+
+function render(){
+  const v = {};
+  fields.forEach(f => v[f] = parseFloat($(f).value) || 0);
+
+  const now = new Date();
+  const msLeft = DEADLINE - now;
+  const daysLeft = Math.max(0, Math.ceil(msLeft / (1000*60*60*24)));
+  const monthsLeft = Math.max(daysLeft / 30.44, 0.1);
+  const weeksLeft = Math.max(daysLeft / 7, 0.1);
+
+  $('daysLeft').textContent = daysLeft;
+  $('today').textContent = now.toLocaleDateString('uz-UZ', {day:'numeric', month:'long', year:'numeric'}) + ' — 31-dekabr 2026gacha hisoblanmoqda';
+
+  const yearElapsed = Math.min(100, Math.max(0, ((now - YEAR_START) / (DEADLINE - YEAR_START)) * 100));
+  $('yearbarFill').style.width = yearElapsed + '%';
+
+  // INCOME
+  const incP = pct(v.income_current, v.income_target);
+  $('incomeMain').textContent = fmt(v.income_current) + " so'm";
+  $('incomeSub').textContent = 'maqsad: ' + fmt(v.income_target) + " so'm / oy";
+  $('incomeBar').style.width = incP + '%';
+  const incClass = badgeClass(incP);
+  $('incomeBar').className = 'bar-fill ' + incClass;
+  $('incomeBadge').className = 'badge ' + incClass;
+  $('incomeBadge').textContent = incClass==='ok' ? 'YAQIN' : (incClass==='warn' ? 'ORQADA' : 'KATTA FARQ');
+  const incomeGap = v.income_target - v.income_current;
+  const neededPerMonth = incomeGap / monthsLeft;
+  $('incomePace').innerHTML = incomeGap > 0
+    ? `Farq: <b>${fmt(incomeGap)}</b> so'm. Har oy <b>+${fmt(neededPerMonth)}</b> so'm o'sish kerak (${monthsLeft.toFixed(1)} oy qoldi).`
+    : `Maqsadga yetgansan yoki oshib ketgansan.`;
+
+  // DEBT (itemlardan hisoblanadi)
+  const debtRemaining = debtItems.reduce((s,d)=>s+(d.balance||0),0);
+  const totalMonthlyPayment = debtItems.reduce((s,d)=>s+(d.payment||0),0);
+  const debtMonthlyNeeded = debtRemaining / monthsLeft;
+  const debtP = pct(totalMonthlyPayment, debtMonthlyNeeded);
+
+  $('debtMain').textContent = fmt(debtRemaining) + " so'm";
+  $('debtSub').textContent = debtItems.length + " ta qarz &middot; oyiga " + fmt(totalMonthlyPayment) + " to'layapsan";
+  $('debtBar').style.width = debtP + '%';
+  const debtClass = badgeClass(debtP);
+  $('debtBar').className = 'bar-fill ' + debtClass;
+  $('debtBadge').className = 'badge ' + debtClass;
+  $('debtBadge').textContent = debtClass==='ok' ? 'YETARLI SUR\'AT' : (debtClass==='warn' ? 'SEKINROQ' : 'YETARSIZ');
+  $('debtPace').innerHTML = `Yil oxirigacha to'liq yopish uchun kerak: <b>${fmt(debtMonthlyNeeded)}</b> so'm/oy. Hozir to'layapsan: <b>${fmt(totalMonthlyPayment)}</b> so'm/oy.`;
+
+  // BLOG
+  const blogP = pct(v.blog_current, v.blog_target);
+  $('blogMain').textContent = fmt(v.blog_current);
+  $('blogSub').textContent = "maqsad: " + fmt(v.blog_target) + ' obunachi';
+  $('blogBar').style.width = blogP + '%';
+  const blogClass = badgeClass(blogP);
+  $('blogBar').className = 'bar-fill ' + blogClass;
+  $('blogBadge').className = 'badge ' + blogClass;
+  $('blogBadge').textContent = blogClass==='ok' ? 'YAQIN' : (blogClass==='warn' ? "O'RTADA" : 'BOSHIDA');
+  const blogGap = Math.max(0, v.blog_target - v.blog_current);
+  const perWeek = blogGap / weeksLeft;
+  $('blogPace').innerHTML = blogGap > 0
+    ? `Farq: <b>${fmt(blogGap)}</b> obunachi. Har hafta <b>+${Math.ceil(perWeek)}</b> ta kerak (${weeksLeft.toFixed(0)} hafta qoldi).`
+    : `Maqsadga yetgansan.`;
+
+  // EXPENSES
+  const otherSom = v.exp_other_usd * v.usd_rate;
+  const expTotal = v.exp_kindergarten + v.exp_rent + otherSom;
+  $('expTotal').textContent = fmt(expTotal) + " so'm";
+
+  // VERDICT
+  const minIncome = expTotal + debtMonthlyNeeded;
+  const gapCurrent = v.income_current - minIncome;
+  const gapTarget = v.income_target - minIncome;
+
+  $('v_debtMonthly').textContent = fmt(debtMonthlyNeeded) + " so'm";
+  $('v_debtPayingNow').textContent = fmt(totalMonthlyPayment) + " so'm";
+  $('v_minIncome').textContent = fmt(minIncome) + " so'm";
+  $('v_gapCurrent').textContent = (gapCurrent>=0?'+':'') + fmt(gapCurrent) + " so'm";
+  $('v_gapCurrent').style.color = gapCurrent>=0 ? 'var(--green)' : 'var(--red)';
+  $('v_gapTarget').textContent = (gapTarget>=0?'+':'') + fmt(gapTarget) + " so'm";
+  $('v_gapTarget').style.color = gapTarget>=0 ? 'var(--green)' : 'var(--red)';
+
+  const finalEl = $('v_final');
+  if(gapCurrent < 0){
+    finalEl.className = 'verdict-final bad';
+    finalEl.innerHTML = `Hozirgi ${fmt(v.income_current)} so'm daromad bilan majburiy xarajat + to'liq qarz to'lovini qoplab bo'lmaydi — oyiga <b>${fmt(Math.abs(gapCurrent))}</b> so'm yetishmaydi. Ikkita yo'l bor: daromadni tezroq oshirish, yoki qarzni yil oxiriga emas — uzoqroq muddatga rejalashtirish.`;
+  } else if (gapTarget < 0) {
+    finalEl.className = 'verdict-final bad';
+    finalEl.innerHTML = `30 mlnga chiqqaningda ham qarzni yil oxirigacha to'liq yopish qiyin bo'ladi. Qarz muddatini biroz cho'zish real reja bo'ladi.`;
+  } else {
+    finalEl.className = 'verdict-final ok';
+    finalEl.innerHTML = `30 mlnga chiqsang, majburiy xarajat va qarzni yopib, oyiga <b>${fmt(gapTarget)}</b> so'm ortiqcha qoladi. Reja real — asosiy ish daromadni ko'tarish.`;
+  }
+}
+
+async function init(){
+  await loadData();
+  renderIncomeRows();
+  renderDebtRows();
+  renderSummaries();
+  render();
+
+  fields.forEach(f => $(f).addEventListener('input', () => { render(); scheduleSave(); }));
+
+  $('addIncomeRow').addEventListener('click', () => {
+    incomeSources.push({id:newId(), name:'', amount:0, date:nowMonthStr(), status:'kutilmoqda'});
+    renderIncomeRows(); renderSummaries(); scheduleSave();
+  });
+  $('addDebtRow').addEventListener('click', () => {
+    debtItems.push({id:newId(), name:'', type:'shaxsiy', balance:0, rate:0, payment:0});
+    renderDebtRows(); renderSummaries(); render(); scheduleSave();
+  });
+
+  setInterval(render, 60000);
+}
+init();
+</script>
+</body>
+</html>
